@@ -408,13 +408,202 @@ Return ONLY this JSON:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# IMAGE PROMPTS — v3: Content-specific, tool-optimized, copy-paste ready
+# IMAGE PROMPTS — v5: Rich slide-specific prompts for AI image generators
+# Each slide gets a detailed, copy-paste-ready prompt with exact layout,
+# colors, icons, typography, and mood. Optimized for DALL-E, Midjourney,
+# Ideogram, and Flux to produce consistent dark-tech editorial PNGs.
 # ═══════════════════════════════════════════════════════════════════════════════
+
+def _build_slide_prompt(s: dict, topic: str, theme_color: str) -> str:
+    """Build a rich, detailed image prompt for a single carousel slide."""
+    sn = s.get("slide_no", 1)
+    stype = s.get("type", "value")
+    headline = s.get("headline", topic)
+    bullets = s.get("bullets", [])
+    key_msg = s.get("key_message", "")
+    subtext = s.get("subtext", "")
+    visual_story = s.get("visual_story", "")
+    scene = s.get("scene_description", "")
+    objects = s.get("objects", [])
+    icons = s.get("icons", [])
+    layout = s.get("layout", "")
+    background = s.get("background", "")
+    lighting = s.get("lighting", "")
+    palette = s.get("palette", [])
+    design_notes = s.get("design_notes", "")
+
+    # Base style that applies to every slide
+    base_style = (
+        "Dark tech editorial Instagram carousel slide, 1:1 square 1080x1080, "
+        "clean modern UI design, no photorealistic clutter, flat graphic design with subtle depth, "
+        "professional social media aesthetic, crisp vector-like elements, high contrast, "
+        "no text overlay in the image itself — all text described as design elements only."
+    )
+
+    # Extract palette colors for the prompt
+    bg_color = "#1a1a2e"
+    accent = theme_color
+    text_color = "#ffffff"
+    highlight = "#10b981"
+    cta_color = "#fbbf24"
+    for p in palette:
+        if p and p.startswith("#"):
+            if "bg" in p.lower() or "background" in p.lower():
+                pass  # keep default
+            else:
+                if p != theme_color and p != "#1a1a2e" and p != "#ffffff" and p != "#10b981":
+                    cta_color = p
+
+    # Build the prompt based on slide type
+    if sn == 1 or stype == "title_hook":
+        # HOOK SLIDE — dramatic, centered icon, bold headline, corner logos/badges
+        prompt = (
+            f"A dark navy background ({bg_color}) with a glowing chip/AI icon at the exact center, "
+            f"radiating a soft {accent} light with subtle bloom glow. "
+            f"Bold white headline text reading '{headline}' placed prominently in the upper-middle area, "
+            f"in a modern sans-serif font (Montserrat Bold or similar), large and commanding. "
+        )
+        if subtext:
+            prompt += f"A smaller supporting line in light gray below the headline reads '{subtext}'. "
+        if bullets:
+            prompt += f"Three clean bullet points in light indigo text arranged vertically below, each with a small {highlight} dot marker. "
+        if objects:
+            for obj in objects[:3]:
+                prompt += f"{obj}. "
+        if icons:
+            for icon in icons[:2]:
+                prompt += f"{icon}. "
+        prompt += (
+            f"Small credibility logos or badges placed in opposite bottom corners (e.g., news source and company logos). "
+            f"The lighting is dramatic with a subtle {accent} glow emanating from the central icon. "
+            f"The mood is urgent, cutting-edge, and attention-grabbing — perfect for a tech news hook slide. "
+            f"Style: sleek SaaS product illustration, dark mode aesthetic, 8K detail, no text overlay on image."
+        )
+
+    elif sn == 7 or stype == "cta":
+        # CTA SLIDE — bright, different from dark slides, follow/save nudge
+        prompt = (
+            f"A bright {accent} gradient background transitioning from vivid {accent} at center to a lighter periwinkle shade at edges, "
+            f"with a faint hexagonal neural network mesh overlay in lighter tones at 15% opacity. "
+            f"Bold white sans-serif headline '{headline}' centered in the top third, large and friendly. "
+        )
+        if bullets:
+            prompt += f"Three bullet points with arrow icons in light indigo on the left side listing key highlights. "
+        prompt += (
+            f"A large rounded pill-shaped 'Follow' CTA button in white with {accent} text placed below the headline. "
+            f"A glowing amber ({cta_color}) bookmark icon and 'Save this post!' nudge at the bottom. "
+            f"Small floating chip and cloud icons in the corners as decorative elements. "
+            f"Confetti dots in white and {accent} scattered in the top-right corner. "
+            f"The mood is friendly, inviting, high-energy, and action-oriented — a celebratory call-to-action slide. "
+            f"Style: modern flat illustration, optimistic magazine-cover aesthetic, clean graphic design, no photorealistic elements."
+        )
+
+    elif "split" in layout.lower() or "two-column" in layout.lower() or "two column" in layout.lower():
+        # SPLIT / TWO-COLUMN LAYOUT — e.g., partnership slides, country stories
+        prompt = (
+            f"A dark navy background ({bg_color}) with a vertical {accent} divider line running down the center. "
+            f"The left side features a large icon or flag emoji paired with a topic symbol (e.g., chip, GPU, country flag). "
+            f"The right side contains a dark card panel with three clean bullet points in white text, "
+            f"each with a small {highlight} dot or arrow marker. "
+        )
+        if headline:
+            prompt += f"Bold white headline '{headline}' placed above the right card with an {accent} accent underline. "
+        if subtext:
+            prompt += f"A small {accent} label badge in the top-left corner reading '{subtext}'. "
+        if objects:
+            for obj in objects[:3]:
+                prompt += f"{obj}. "
+        prompt += (
+            f"The mood is informative and authoritative, with a clean editorial design feel. "
+            f"Style: sleek SaaS product illustration, dark mode UI, subtle card shadows, 8K detail."
+        )
+
+    elif "timeline" in layout.lower() or "roadmap" in layout.lower() or "milestone" in layout.lower():
+        # TIMELINE SLIDE — strategic, forward-looking
+        prompt = (
+            f"A dark navy background ({bg_color}) with a horizontal timeline layout. "
+            f"Three milestone nodes connected by bold {accent} arrows forming a left-to-right flow. "
+            f"Each node is a rounded dark card with a small chip or relevant icon at the top, "
+            f"a white headline label (e.g., 'Today', 'Soon', 'Later'), and a short description in light gray below. "
+        )
+        if bullets:
+            for i, b in enumerate(bullets[:3]):
+                prompt += f"Node {i+1} reads: '{b}'. "
+        prompt += (
+            f"The nodes are connected by glowing {accent} arrow lines with circular connector dots. "
+            f"The mood is strategic, optimistic, and empowering — a clear narrative progression for developers. "
+            f"Style: clean data visualization aesthetic, dark mode UI, subtle glow effects on connectors, modern infographic."
+        )
+
+    elif "india" in topic.lower() or "indian" in str(key_msg).lower() or "india" in str(headline).lower():
+        # INDIA-SPECIFIC SLIDE — tricolor accent, globe/map, empowering
+        prompt = (
+            f"A dark navy background ({bg_color}) with an Indian tricolor accent bar "
+            f"(saffron #FF9933, white #FFFFFF, green #138808) at the very top edge. "
+            f"A large globe or map icon centered with connection lines radiating outward in {accent}. "
+            f"Three bullet points displayed in a dark card panel below, each with relevant emojis (e.g., rupee, chip, rocket) "
+            f"in {accent} or {highlight} color. "
+        )
+        if headline:
+            prompt += f"Bold white headline '{headline}' placed above the globe. "
+        prompt += (
+            f"The mood is forward-looking, empowering, and patriotic — focused on global opportunity for Indian developers. "
+            f"Style: sleek SaaS product illustration, dark mode aesthetic, subtle glow effects, modern editorial design."
+        )
+
+    else:
+        # GENERIC VALUE SLIDE — icon top, bullets, clean card layout
+        prompt = (
+            f"A dark navy background ({bg_color}) with a large topic icon (e.g., GPU, cloud, chip, brain) "
+            f"at the top center, glowing with subtle {accent} light. "
+            f"Bold white headline '{headline}' placed prominently below the icon. "
+        )
+        if subtext:
+            prompt += f"A supporting line in light gray below the headline: '{subtext}'. "
+        if bullets:
+            prompt += (
+                f"Three clean bullet points listed vertically in a dark card panel, "
+                f"each with a small {highlight} arrow or dot marker, text in white/light gray. "
+            )
+        if objects:
+            for obj in objects[:3]:
+                prompt += f"{obj}. "
+        if "supply" in topic.lower() or "cost" in topic.lower() or "trend" in topic.lower():
+            prompt += (
+                f"A horizontal trend arrow graphic at the bottom showing progression "
+                f"(e.g., 'More Supply -> Lower Costs') in white text with {highlight} arrow accents. "
+            )
+        prompt += (
+            f"The mood is optimistic, forward-looking, and informative — clean data-visualization aesthetic. "
+            f"Style: sleek SaaS product illustration, dark mode UI, subtle card shadows, modern infographic design."
+        )
+
+    # Append visual story and scene description if available
+    if visual_story:
+        prompt += f" Visual story: {visual_story}"
+    if scene:
+        prompt += f" Scene composition: {scene}"
+    if lighting:
+        prompt += f" Lighting: {lighting}"
+    if design_notes:
+        prompt += f" Design notes: {design_notes}"
+
+    # Final quality/style tag
+    prompt += (
+        " High-quality render, consistent dark-tech editorial style across all slides, "
+        "no photorealistic human figures, no text rendered as actual readable words in the image — "
+        "text described as placeholder design elements only."
+    )
+
+    return prompt
+
 
 def generate_image_prompts(content: dict, theme: dict) -> tuple[dict, str]:
     """
-    v4: Compact, token-efficient image prompts (5-10K chars for carousel).
-    Only includes essential info per slide to avoid exhausting API tokens.
+    v5: Rich, detailed slide-specific image prompts for AI image generators.
+    Each slide gets a complete, copy-paste-ready prompt with exact layout,
+    colors, icons, typography, and mood. Produces consistent dark-tech
+    editorial PNGs matching the uploaded reference style.
     """
     ctype = content.get("content_type", "")
     topic = content.get("topic", theme["theme"])
@@ -422,8 +611,9 @@ def generate_image_prompts(content: dict, theme: dict) -> tuple[dict, str]:
     theme_color = theme.get("color", "#6366f1")
     theme_icon = theme.get("icon", "💡")
 
-    # ── Build compact per-slide blocks ──
-    slide_blocks = []
+    # ── Build rich per-slide prompts ──
+    slide_prompts = []
+    individual_prompts = {}
 
     if ctype == "carousel" and slides:
         for s in slides:
@@ -432,9 +622,11 @@ def generate_image_prompts(content: dict, theme: dict) -> tuple[dict, str]:
             headline = s.get("headline", "")
             bullets = s.get("bullets", [])
             key_msg = s.get("key_message", "")
-            image_prompt = s.get("image_prompt", "")
 
-            # Compact: headline + key bullets + pre-generated image_prompt only
+            # Build the rich detailed prompt
+            rich_prompt = _build_slide_prompt(s, topic, theme_color)
+
+            # Also build a compact summary block for the unified prompt
             lines = [f"SLIDE {sn}: {headline}"]
             if stype == "title_hook":
                 lines.append("Type: HOOK — stop scroll")
@@ -446,14 +638,26 @@ def generate_image_prompts(content: dict, theme: dict) -> tuple[dict, str]:
                 lines.append("Bullets: " + " | ".join(bullets))
             if key_msg:
                 lines.append(f"Key: {key_msg}")
-            if image_prompt:
-                lines.append(f"Visual: {image_prompt}")
-            slide_blocks.append("\n".join(lines))
+            lines.append(f"Image Prompt: {rich_prompt}")
+
+            slide_prompts.append("\n".join(lines))
+            individual_prompts[f"slide_{sn}"] = rich_prompt
 
     elif ctype == "reel":
         thumbnail_text = content.get("thumbnail_text", "")
         hook1 = content.get("hook1", "")
         hook2 = content.get("hook2", "")
+
+        rich_prompt = (
+            f"A dark navy background (#1a1a2e) with a dramatic {theme_color} accent glow. "
+            f"Bold white headline text '{thumbnail_text or topic}' in the upper third, "
+            f"large sans-serif font (Montserrat Bold), 60-72pt. "
+            f"An expressive 3D cartoon character upper body with shocked/curious face, "
+            f"dramatic rim light from the left, dark vignette around edges. "
+            f"Small {theme_color} particles or data nodes floating around. "
+            f"Mood: urgent, attention-grabbing, scroll-stopping. "
+            f"Style: 3D cartoon illustration, dark tech editorial, high contrast, no photorealism."
+        )
 
         lines = ["THUMBNAIL: Reel Cover"]
         lines.append("Format: 9:16 vertical, 1080×1920")
@@ -463,12 +667,11 @@ def generate_image_prompts(content: dict, theme: dict) -> tuple[dict, str]:
             lines.append(f"Hook1: {hook1}")
         if hook2:
             lines.append(f"Hook2: {hook2}")
-        lines.append("Visual: Animated character, expressive face, dark navy bg, "
-                     f"{theme_color} accent glow, bold white headline 3-5 words max, "
-                     "dramatic rim light. 3D cartoon style.")
-        slide_blocks.append("\n".join(lines))
+        lines.append(f"Image Prompt: {rich_prompt}")
+        slide_prompts.append("\n".join(lines))
+        individual_prompts["reel_thumbnail"] = rich_prompt
 
-    # ── Compact unified prompt ──
+    # ── Unified master prompt ──
     if ctype == "carousel":
         unified_prompt = f"""CAROUSEL IMAGE PROMPT — {topic}
 Format: 7 slides, 1:1 square (1080×1080), dark tech editorial
@@ -476,9 +679,16 @@ Theme: {theme['theme']} | Color: {theme_color} | Font: Montserrat Bold + Poppins
 Palette: #1a1a2e (bg), {theme_color} (accent), #ffffff (text), #10b981 (highlight), #fbbf24 (CTA)
 Rules: 48px padding, bold white headlines 48-60pt, body 18-24pt light gray, accent glow behind icon, consistent style across all slides.
 
-{"\n\n".join(slide_blocks)}
+Generate ONE slide at a time for consistency. Each prompt below is complete and copy-paste ready.
 
-Paste into ChatGPT/DALL-E or Google Flow. Generate one slide at a time for consistency."""
+{"\n\n".join(slide_prompts)}
+
+GENERATION TIPS:
+- Use DALL-E 3 or Ideogram for best text-in-image results
+- For Midjourney/Flux, add text in Canva after generation
+- Generate slides 1-6 first (dark theme), then slide 7 (bright CTA) last
+- Keep aspect ratio exactly 1:1 (1080x1080) for all slides
+- Export as PNG with transparent text layers if possible"""
 
     else:  # reel
         unified_prompt = f"""REEL THUMBNAIL PROMPT — {topic}
@@ -487,9 +697,9 @@ Theme: {theme['theme']} | Color: {theme_color}
 Palette: #1a1a2e (bg), {theme_color} (accent), #ffffff (text), #f59e0b (urgency)
 Rules: Headline max 5 words, 60-72pt bold white, character upper body expressive face, dramatic rim light, dark vignette, text in upper third.
 
-{"\n".join(slide_blocks)}
+{slide_prompts[0] if slide_prompts else "No prompt generated."}
 
-Paste into ChatGPT/DALL-E. Ask for edits like "make character more shocked" if needed."""
+Paste into DALL-E/Midjourney. Ask for edits like "make character more shocked" if needed."""
 
     result = {
         "unified_prompt": unified_prompt,
@@ -500,11 +710,14 @@ Paste into ChatGPT/DALL-E. Ask for edits like "make character more shocked" if n
         "color_palette": [theme_color, "#1a1a2e", "#ffffff", "#10b981", "#fbbf24"],
         "thumbnail_tip": f"Use {theme_color} accent on dark navy with bold headline to stop scroll",
         "text_overlay": (slides[0].get("headline", topic) if slides and ctype == "carousel" else content.get("thumbnail_text", topic))[:30],
-        "slide_prompts": slide_blocks if ctype == "carousel" else [],
-        "recommended_tool": "ChatGPT/DALL-E (best text) → Google Flow (fast backup) → Canva (text assembly)",
+        "slide_prompts": slide_prompts,
+        "individual_prompts": individual_prompts,
+        "recommended_tool": "DALL-E 3 (best text + consistency) → Ideogram (fast text) → Midjourney/Flux (aesthetic) → Canva (text assembly + export PNG)",
     }
 
-    return result, "v4-compact"
+    return result, "v5-rich-slide-prompts"
+
+
 
 
 def analyse_engagement(log: list, current_insights: dict) -> tuple[dict, str]:
